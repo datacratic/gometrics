@@ -124,13 +124,13 @@ func (monitor *Monitor) PublishFunc(handler func(*Summary)) {
 	monitor.Publish(PublishFunc(handler))
 }
 
-// NewJSONMonitor creates a publisher that POST the summary of metrics as a JSON object to the specified URL.
-func NewJSONMonitor(name string, url string) *Monitor {
-	m := &Monitor{
+// NewJSONMonitor creates and starts a monitor that POST the summary of metrics as a JSON object to the specified URL.
+func NewJSONMonitor(name string, url string) (monitor *Monitor) {
+	monitor = &Monitor{
 		Name: name,
 	}
 
-	m.PublishFunc(func(s *Summary) {
+	monitor.PublishFunc(func(s *Summary) {
 		text, err := json.Marshal(s)
 		if err != nil {
 			log.Panic(err)
@@ -149,5 +149,6 @@ func NewJSONMonitor(name string, url string) *Monitor {
 		r.Body.Close()
 	})
 
-	return m
+	monitor.Start()
+	return
 }
