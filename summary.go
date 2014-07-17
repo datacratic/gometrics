@@ -7,51 +7,68 @@ import (
 	"time"
 )
 
-// Summary represents the aggregation of metrics over a period of time.
-type Summary struct {
-	// Name contains a friendly identifier for this set of metrics.
-	Name string
+// Metrics represents the aggregation of a set of metrics over a period of time.
+type Metrics struct {
 	// Keys contains the current set of metrics.
 	Keys map[string]Metric
 	// Hits contains the number of accumulated samples.
 	Hits int
+}
+
+// Summary represents multiple aggregations of metrics over a period of time.
+type Summary struct {
+	// Name contains a friendly identifier for this set of metrics.
+	Name string
+	// Data contains a collection of named metrics.
+	Data map[string]*Metrics
 	// Send contains a sequential number of that summary based on the number of times it was published by the monitor.
 	Send int
 	// Time contains the time stamp of the summary publication.
 	Time time.Time
+	// Step contains the duration of the aggreation period.
+	Step time.Duration
 }
 
 // Record uses reflection to create and aggregate metrics based on their data type.
-func (summary *Summary) Record(value interface{}) {
-	m := reflect.ValueOf(value).Elem()
-	recordMembers(m, summary.Keys)
+func (summary *Summary) Record(name string, data interface{}) {
+	item, ok := summary.Data[name]
+	if !ok {
+		item = new(Metrics)
+		item.Keys = make(map[string]Metric)
+		summary.Data[name] = item
+	}
+
+	item.Hits++
+	recordMembers(reflect.ValueOf(data).Elem(), item.Keys)
 }
 
-func recordMembers(m reflect.Value, keys map[string]Metric) {
-	t := m.Type()
-	for i := 0; i < m.NumField(); i++ {
-		f := m.Field(i)
-		n := t.Field(i).Name
+func recordMembers(value reflect.Value, keys map[string]Metric) {
+	t := value.Type()
 
-		k, ok := keys[n]
+	for i := 0; i < t.NumField(); i++ {
+		f := t.Field(i)
+		v := value.Field(i)
+		k := v.Kind()
+
+		m, ok := keys[f.Name]
 		if !ok {
-			switch f.Interface().(type) {
+			switch v.Interface().(type) {
 			case bool:
-				k = new(MetricBool)
+				m = new(MetricBool)
 			case int:
-				k = new(MetricInt)
+				m = new(MetricInt)
 			case float64:
-				k = new(MetricFloat)
+				m = new(MetricFloat)
 			case time.Duration:
-				k = new(MetricDuration)
+				m = new(MetricDuration)
 			case string:
-				k = &MetricString{
+				m = &MetricString{
 					Items: make(map[string]int),
 				}
 			default:
 				switch {
-				case f.Type().Kind() == reflect.Map:
-					k = &MetricMap{
+				case k == reflect.Map:
+					m = &MetricMap{
 						Items: make(map[string]map[string]Metric),
 					}
 				default:
@@ -59,9 +76,9 @@ func recordMembers(m reflect.Value, keys map[string]Metric) {
 				}
 			}
 
-			keys[n] = k
+			keys[f.Name] = m
 		}
 
-		k.Record(f.Interface())
+		m.Record(v.Interface())
 	}
 }

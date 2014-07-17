@@ -4,7 +4,7 @@ package metric
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
 	"math/rand"
 	"testing"
 	"time"
@@ -36,7 +36,7 @@ func TestMetric(t *testing.T) {
 
 	m.Start()
 
-	m.RecordMetrics(&MoreMetrics{
+	m.RecordMetrics("test", &MoreMetrics{
 		Request: true,
 		Bytes:   123,
 		Speed:   123.456,
@@ -52,7 +52,7 @@ func TestMetric(t *testing.T) {
 		},
 	})
 
-	m.RecordMetrics(&MoreMetrics{
+	m.RecordMetrics("test", &MoreMetrics{
 		Request: true,
 		Bytes:   456,
 		Speed:   456.789,
@@ -70,8 +70,17 @@ func TestMetric(t *testing.T) {
 
 	result := <-reports
 
-	if len(result.Keys) != 6 {
-		t.Fatalf("expecting 6 keys instead of %d\n", len(result.Keys))
+	if len(result.Data) != 1 {
+		t.Fatalf("expecting metrics %d\n", len(result.Data))
+	}
+
+	metrics, ok := result.Data["test"]
+	if !ok {
+		t.Fatalf("expecting metrics 'data' in map '%#v'\n", result.Data)
+	}
+
+	if len(metrics.Keys) != 6 {
+		t.Fatalf("expecting 6 keys instead of %d\n", len(metrics.Keys))
 	}
 
 	values := map[string]string{
@@ -84,9 +93,9 @@ func TestMetric(t *testing.T) {
 	}
 
 	for key, value := range values {
-		text, err := json.Marshal(result.Keys[key])
+		text, err := json.Marshal(metrics.Keys[key])
 		if err != nil {
-			t.Fatalf("%s\n", err.Error())
+			t.Fatalf("%s\n", err)
 		}
 
 		s := string(text)
@@ -124,16 +133,16 @@ func BenchmarkMetric(b *testing.B) {
 		Name: "random-test",
 	}
 
-	output := true
+	output := false
 
 	m.PublishFunc(func(s *Summary) {
 		if output {
-			text, err := json.Marshal(s.Keys)
+			text, err := json.Marshal(s)
 			if err != nil {
-				b.Fatalf("%s\n", err.Error())
+				b.Fatal(err)
 			}
 
-			fmt.Printf("\n%s\n", string(text))
+			log.Printf("\n%s\n", string(text))
 		}
 	})
 
@@ -145,6 +154,6 @@ func BenchmarkMetric(b *testing.B) {
 	for i := 0; i != b.N; i++ {
 		metric := metrics[k]
 		k = (k + 1) % n
-		m.RecordMetrics(metric)
+		m.RecordMetrics("test", metric)
 	}
 }

@@ -21,13 +21,13 @@ func ExampleMonitor() {
 	// start the monitoring background service
 	monitor.Start()
 
-	monitor.RecordMetrics(&SomeMetrics{
+	monitor.RecordMetrics("test", &SomeMetrics{
 		Request: true,
 		Bytes:   100,
 		Latency: time.Millisecond * 2,
 	})
 
-	monitor.RecordMetrics(&SomeMetrics{
+	monitor.RecordMetrics("test", &SomeMetrics{
 		Request: true,
 		Bytes:   150,
 		Latency: time.Millisecond * 4,

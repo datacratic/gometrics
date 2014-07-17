@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"time"
 )
@@ -29,7 +30,12 @@ type Monitor struct {
 	PublishInterval time.Duration
 
 	summary *Summary
-	records chan interface{}
+	records chan metricSet
+}
+
+type metricSet struct {
+	name string
+	data interface{}
 }
 
 // Start creates the background service that aggregate metrics and publish them periodically.
@@ -43,23 +49,23 @@ func (monitor *Monitor) Start() (err error) {
 		monitor.PublishFunc(func(s *Summary) {
 			text, err := json.MarshalIndent(s, "", "\t")
 			if err != nil {
-				panic(err.Error())
+				log.Panic(err)
 			}
 
-			fmt.Println(string(text))
+			log.Println(string(text))
 		})
 	}
 
 	monitor.summary = &Summary{
 		Name: monitor.Name,
-		Keys: make(map[string]Metric),
+		Data: make(map[string]*Metrics),
 	}
 
 	if monitor.PublishInterval == 0 {
 		monitor.PublishInterval = DefaultMetricPublishInterval
 	}
 
-	monitor.records = make(chan interface{})
+	monitor.records = make(chan metricSet)
 
 	// start the background service
 	go func() {
@@ -67,20 +73,20 @@ func (monitor *Monitor) Start() (err error) {
 		for {
 			select {
 			case r := <-monitor.records:
-				monitor.summary.Record(r)
-				monitor.summary.Hits++
+				monitor.summary.Record(r.name, r.data)
 
 			case <-t.C:
-				if monitor.summary.Hits == 0 {
+				if len(monitor.summary.Data) == 0 {
 					break
 				}
 
 				s := monitor.summary
 				s.Time = time.Now()
+				s.Step = monitor.PublishInterval
 				s.Send++
 				monitor.summary = &Summary{
 					Name: s.Name,
-					Keys: make(map[string]Metric),
+					Data: make(map[string]*Metrics),
 					Send: s.Send,
 				}
 
@@ -93,8 +99,11 @@ func (monitor *Monitor) Start() (err error) {
 }
 
 // RecordMetrics posts a set of metrics to the monitor background service.
-func (monitor *Monitor) RecordMetrics(value interface{}) {
-	monitor.records <- value
+func (monitor *Monitor) RecordMetrics(name string, data interface{}) {
+	monitor.records <- metricSet{
+		name: name,
+		data: data,
+	}
 }
 
 // Publish sets the publish handler.
@@ -124,17 +133,17 @@ func NewJSONMonitor(name string, url string) *Monitor {
 	m.PublishFunc(func(s *Summary) {
 		text, err := json.Marshal(s)
 		if err != nil {
-			panic(err.Error())
+			log.Panic(err)
 		}
 
 		r, err := http.Post(url, "application/json", bytes.NewReader(text))
 		if err != nil {
-			panic(err.Error())
+			log.Panic(err)
 		}
 
 		_, err = ioutil.ReadAll(r.Body)
 		if err != nil {
-			panic(err.Error())
+			log.Panic(err)
 		}
 
 		r.Body.Close()
