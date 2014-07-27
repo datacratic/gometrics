@@ -54,21 +54,21 @@ func recordMembers(value reflect.Value, keys map[string]Metric) {
 		if !ok {
 			switch v.Interface().(type) {
 			case bool:
-				m = new(MetricBool)
+				m = new(Bool)
 			case int:
-				m = new(MetricInt)
+				m = new(Int)
 			case float64:
-				m = new(MetricFloat)
+				m = new(Float)
 			case time.Duration:
-				m = new(MetricDuration)
+				m = new(Duration)
 			case string:
-				m = &MetricString{
+				m = &String{
 					Items: make(map[string]int),
 				}
 			default:
 				switch {
 				case k == reflect.Map:
-					m = &MetricMap{
+					m = &Map{
 						Items: make(map[string]map[string]Metric),
 					}
 				default:

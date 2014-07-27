@@ -14,21 +14,21 @@ type Metric interface {
 	Record(value interface{})
 }
 
-// MetricBool implements support for boolean metrics.
-type MetricBool struct {
+// Bool implements support for boolean metrics.
+type Bool struct {
 	Count int
 }
 
 // Record keeps track of the number of times the boolean value was true.
-func (metric *MetricBool) Record(value interface{}) {
+func (metric *Bool) Record(value interface{}) {
 	v := value.(bool)
 	if v {
 		metric.Count++
 	}
 }
 
-// MetricInt implements support for numerical integral metrics.
-type MetricInt struct {
+// Int implements support for numerical integral metrics.
+type Int struct {
 	Average float64
 	Maximum int
 	Minimum int
@@ -37,7 +37,7 @@ type MetricInt struct {
 }
 
 // Record keeps track of the minimum, maximum and average value of integers.
-func (metric *MetricInt) Record(value interface{}) {
+func (metric *Int) Record(value interface{}) {
 	v := value.(int)
 	metric.total += v
 
@@ -53,8 +53,8 @@ func (metric *MetricInt) Record(value interface{}) {
 	metric.Average = float64(metric.total) / float64(metric.count)
 }
 
-// MetricFloat implements support for numerical floating point metrics.
-type MetricFloat struct {
+// Float implements support for numerical floating point metrics.
+type Float struct {
 	Average float64
 	Maximum float64
 	Minimum float64
@@ -63,7 +63,7 @@ type MetricFloat struct {
 }
 
 // Record keeps track of the minimum, maximum and average value of floating points.
-func (metric *MetricFloat) Record(value interface{}) {
+func (metric *Float) Record(value interface{}) {
 	v := value.(float64)
 	metric.total += v
 
@@ -79,8 +79,8 @@ func (metric *MetricFloat) Record(value interface{}) {
 	metric.Average = metric.total / float64(metric.count)
 }
 
-// MetricDuration implements support for time duration metrics.
-type MetricDuration struct {
+// Duration implements support for time duration metrics.
+type Duration struct {
 	Average float64
 	Maximum int64
 	Minimum int64
@@ -89,7 +89,7 @@ type MetricDuration struct {
 }
 
 // Record keeps track of the minimum, maximum and average value of time durations.
-func (metric *MetricDuration) Record(value interface{}) {
+func (metric *Duration) Record(value interface{}) {
 	d := value.(time.Duration)
 	v := int64(d)
 
@@ -107,13 +107,13 @@ func (metric *MetricDuration) Record(value interface{}) {
 	metric.Average = float64(metric.total) / float64(metric.count)
 }
 
-// MetricString implements support for string multiplicity metrics.
-type MetricString struct {
+// String implements support for string multiplicity metrics.
+type String struct {
 	Items map[string]int
 }
 
 // Record keeps track of the number of times a string was encountered.
-func (metric *MetricString) Record(value interface{}) {
+func (metric *String) Record(value interface{}) {
 	s := value.(string)
 	if s != "" {
 		v := metric.Items[s]
@@ -122,13 +122,13 @@ func (metric *MetricString) Record(value interface{}) {
 	}
 }
 
-// MetricMap implements support for map of strings to metrics.
-type MetricMap struct {
+// Map implements support for map of strings to metrics.
+type Map struct {
 	Items map[string]map[string]Metric
 }
 
 // Record keeps track of the map metrics by recursing on the value of every key.
-func (metric *MetricMap) Record(value interface{}) {
+func (metric *Map) Record(value interface{}) {
 	v := reflect.ValueOf(value)
 	k := v.MapKeys()
 	for _, i := range k {
