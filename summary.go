@@ -45,6 +45,11 @@ func (summary *Summary) Record(name string, data interface{}) {
 func recordMembers(value reflect.Value, keys map[string]Metric) {
 	t := value.Type()
 
+	if t.Kind() == reflect.Ptr {
+		recordMembers(value.Elem(), keys)
+		return
+	}
+
 	for i := 0; i < t.NumField(); i++ {
 		f := t.Field(i)
 		v := value.Field(i)
