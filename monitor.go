@@ -5,7 +5,6 @@ package metric
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -15,6 +14,14 @@ import (
 // Publisher defines an interface where the summary of metrics can be published.
 type Publisher interface {
 	Send(s *Summary)
+}
+
+// PublisherFunc defines a convenience type to wrap a Publisher function.
+type PublisherFunc func(s *Summary)
+
+// Send sends the summary to the publisher functions.
+func (fn PublisherFunc) Send(s *Summary) {
+	fn(s)
 }
 
 // DefaultMetricPublishInterval defines the default frequency used to publish the summary of metrics.
@@ -39,10 +46,9 @@ type metricSet struct {
 }
 
 // Start creates the background service that aggregate metrics and publish them periodically.
-func (monitor *Monitor) Start() (err error) {
+func (monitor *Monitor) Start() {
 	if monitor.Name == "" {
-		err = fmt.Errorf("missing monitor name")
-		return
+		panic("Name must be set for monitor")
 	}
 
 	if monitor.Publisher == nil {
@@ -151,4 +157,20 @@ func NewJSONMonitor(name string, url string) (monitor *Monitor) {
 
 	monitor.Start()
 	return
+}
+
+var nullMonitor *Monitor
+
+// NullMonitor defines a monitor that doesn't publish its results.
+func NullMonitor() *Monitor {
+	return nullMonitor
+}
+
+func init() {
+	nullMonitor = &Monitor{
+		Name:            "null",
+		Publisher:       PublisherFunc(func(s *Summary) {}),
+		PublishInterval: time.Second,
+	}
+	nullMonitor.Start()
 }
