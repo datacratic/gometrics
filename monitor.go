@@ -48,7 +48,7 @@ type metricSet struct {
 // Start creates the background service that aggregate metrics and publish them periodically.
 func (monitor *Monitor) Start() {
 	if monitor.Name == "" {
-		panic("Name must be set for monitor")
+		log.Panic("Name must be set for monitor")
 	}
 
 	if monitor.Publisher == nil {
