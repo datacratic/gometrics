@@ -113,7 +113,7 @@ func writeToCarbon(w io.Writer, metrics map[string]Metric, name string, when int
 				write(text+".Minimum", float64(m.Minimum)/s)
 		case *String:
 			for key, value := range m.Items {
-				if !write(text+key, float64(value)/dt) {
+				if !write(text+"."+key, float64(value)/dt) {
 					return
 				}
 			}
