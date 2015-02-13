@@ -90,7 +90,7 @@ func NewCarbonMonitor(name string, urls []string) (monitor *Monitor) {
 func writeToCarbon(w io.Writer, metrics map[string]Metric, name string, when int64, dt float64) (err error) {
 	write := func(name string, value float64) bool {
 		_, err = fmt.Fprintf(w, "%s %f %d\n", name, value, when)
-		return err != nil
+		return err == nil
 	}
 
 	for key, metric := range metrics {
