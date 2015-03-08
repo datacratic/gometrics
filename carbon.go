@@ -8,27 +8,31 @@ import (
 	"io"
 	"log"
 	"net"
+	"sync"
 	"time"
 )
 
-type CarbonMonitor struct {
-	Name string
+type CarbonPublisher struct {
 	URLs []string
 
+	once sync.Once
 	feed []chan *Summary
 }
 
-// NewCarbonMonitor creates a monitor that writes the summary of metrics to Carbon daemons at the specified URLs.
-func NewCarbonMonitor(name string, urls []string) (monitor *Monitor) {
-	monitor = &Monitor{
-		Name: name,
+func (carbon *CarbonPublisher) Send(s *Summary) {
+	carbon.once.Do(carbon.initialize)
+
+	for i := range carbon.feed {
+		carbon.feed[i] <- s
 	}
+}
 
-	feeds := make([]chan *Summary, len(urls))
+func (carbon *CarbonPublisher) initialize() {
+	carbon.feed = make([]chan *Summary, len(carbon.URLs))
 
-	for i := range urls {
+	for i := range carbon.URLs {
 		feed := make(chan *Summary)
-		feeds[i] = feed
+		carbon.feed[i] = feed
 
 		go func(url string) {
 			wait := time.Second
@@ -75,14 +79,18 @@ func NewCarbonMonitor(name string, urls []string) (monitor *Monitor) {
 					writer.Flush()
 				}
 			}
-		}(urls[i])
+		}(carbon.URLs[i])
 	}
+}
 
-	monitor.PublishFunc(func(s *Summary) {
-		for i := range feeds {
-			feeds[i] <- s
-		}
-	})
+// NewCarbonMonitor creates a monitor that writes the summary of metrics to Carbon daemons at the specified URLs.
+func NewCarbonMonitor(name string, urls []string) (monitor *Monitor) {
+	monitor = &Monitor{
+		Name: name,
+		Publisher: &CarbonPublisher{
+			URLs: urls,
+		},
+	}
 
 	return
 }

@@ -45,6 +45,10 @@ type metricSet struct {
 	data interface{}
 }
 
+func (monitor *Monitor) Run() {
+	monitor.Start()
+}
+
 // Start creates the background service that aggregate metrics and publish them periodically.
 func (monitor *Monitor) Start() {
 	if monitor.Name == "" {
