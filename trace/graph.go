@@ -6,7 +6,6 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"net/http"
 	"os/exec"
 )
 
@@ -110,9 +109,12 @@ func (graph *Graph) HandleTrace(events []Event) {
 }
 
 func (graph *Graph) Start() error {
-	if graph.Resource != "" {
-		http.Handle(graph.Resource, graph)
-	}
+	/*
+		if graph.Resource != "" {
+			http.Handle(graph.Resource, graph)
+		}
+	*/
+	return nil
 }
 
 func (graph *Graph) Report() {
