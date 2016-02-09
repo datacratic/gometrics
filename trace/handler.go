@@ -2,14 +2,18 @@
 
 package trace
 
-import "golang.org/x/net/context"
+import (
+	"time"
+
+	"golang.org/x/net/context"
+)
 
 // Handler defines the interface needed to process captured events.
 // The 1st event is used as a root node.
 // Each event are captured within a context indicated by their 'From' field.
 type Handler interface {
 	HandleTrace([]Event)
-	Report()
+	Report(time.Duration)
 }
 
 // handlerKey is a private type to find the current handler.
@@ -36,7 +40,7 @@ type nilHandler struct {
 func (handler *nilHandler) HandleTrace(events []Event) {
 }
 
-func (handler *nilHandler) Report() {
+func (handler *nilHandler) Report(dt time.Duration) {
 }
 
 type chainHandler struct {
@@ -49,8 +53,8 @@ func (h *chainHandler) HandleTrace(events []Event) {
 	h.f()
 }
 
-func (h *chainHandler) Report() {
-	h.Handler.Report()
+func (h *chainHandler) Report(dt time.Duration) {
+	h.Handler.Report(dt)
 }
 
 type multiHandler []Handler
@@ -61,8 +65,8 @@ func (items multiHandler) HandleTrace(events []Event) {
 	}
 }
 
-func (items multiHandler) Report() {
+func (items multiHandler) Report(dt time.Duration) {
 	for _, item := range items {
-		item.Report()
+		item.Report(dt)
 	}
 }

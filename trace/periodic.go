@@ -20,16 +20,20 @@ type Periodic struct {
 func (h *Periodic) HandleTrace(events []Event) {
 	h.once.Do(h.initialize)
 
+	done := make(chan struct{})
 	h.feed <- func() {
 		h.Handler.HandleTrace(events)
+		close(done)
 	}
+
+	<-done
 }
 
-func (h *Periodic) Report() {
+func (h *Periodic) Report(dt time.Duration) {
 	h.once.Do(h.initialize)
 
 	h.feed <- func() {
-		h.Report()
+		h.Handler.Report(dt)
 	}
 }
 
@@ -49,7 +53,7 @@ func (h *Periodic) initialize() {
 	ticker := time.Tick(dt)
 	go func() {
 		for _ = range ticker {
-			h.Report()
+			h.Report(dt)
 		}
 	}()
 }

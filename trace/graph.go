@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"fmt"
 	"os/exec"
+	"time"
 )
 
 // Graph represents a trace as interconnected contexts with their exit points.
@@ -117,7 +118,7 @@ func (graph *Graph) Start() error {
 	return nil
 }
 
-func (graph *Graph) Report() {
+func (graph *Graph) Report(dt time.Duration) {
 }
 
 // DrawSVG exports the graph in SVG format.

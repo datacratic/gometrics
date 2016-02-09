@@ -17,7 +17,7 @@ import (
 
 // Carbon enables writing summary of metrics to Carbon daemons at the specified URLs.
 type Carbon struct {
-	// URLs contains a list of addresses used to dial.
+	// URLs contains a list of addresses used to dial e.g. tcp://127.0.0.1:2023.
 	URLs []string
 	// Prefix contains the path under which all keys will be written.
 	Prefix string
@@ -30,7 +30,7 @@ type Carbon struct {
 // NewWriter creates a new Carbon writer that will send the aggregated summary metrics to all connections.
 // In case of failure, the faulty connection is closed and the written data is queued.
 // Metrics can still be sent while the connection is reestablished.
-// This background process happens in the background and will retry indefinitel
+// This background process happens in the background and will retry indefinitely.
 func (carbon *Carbon) NewWriter(s *Summary) (result Writer) {
 	carbon.once.Do(carbon.initialize)
 
