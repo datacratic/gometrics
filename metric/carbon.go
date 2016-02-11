@@ -9,7 +9,6 @@ import (
 	"log"
 	"net"
 	"net/url"
-	"os"
 	"strings"
 	"sync"
 	"time"
@@ -166,7 +165,6 @@ func (carbon *carbonConn) write(data []byte) (err error) {
 		log.Printf("carbon: connected at '%s://%s'\n", carbon.network, carbon.address)
 	}
 
-	io.Copy(os.Stderr, bytes.NewReader(data))
 	_, err = io.Copy(carbon.conn, bytes.NewReader(data))
 	return
 }
