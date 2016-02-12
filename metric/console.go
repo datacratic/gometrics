@@ -23,18 +23,16 @@ func (c *Console) NewWriter(s *Summary) Writer {
 	t := s.Time.Format(time.RFC3339)
 	return &consoleWriter{
 		w: w,
-		t: t,
 		f: fmt.Sprintf("%s %%s %%f\n", t),
+		s: fmt.Sprintf("%s %%s %%s\n", t),
 		d: s.Step.Seconds(),
 	}
 }
 
 type consoleWriter struct {
-	logs map[string]map[string]int64
-
 	w io.Writer
-	t string
 	f string
+	s string
 	d float64
 }
 
@@ -49,28 +47,9 @@ func (w *consoleWriter) WriteScaled(name string, value float64) (err error) {
 }
 
 func (w *consoleWriter) WriteString(name, text string) (err error) {
-	c, ok := w.logs[name]
-	if !ok {
-		c = make(map[string]int64)
-		if nil == w.logs {
-			w.logs = make(map[string]map[string]int64)
-		}
-
-		w.logs[name] = c
-	}
-
-	c[text]++
+	_, err = fmt.Fprintf(w.w, w.s, name, text)
 	return
 }
 
 func (w *consoleWriter) Close() {
-	for name, items := range w.logs {
-		for text, count := range items {
-			if count == 1 {
-				fmt.Fprintf(w.w, "%s %s %s\n", w.t, name, text)
-			} else {
-				fmt.Fprintf(w.w, "%s %s %s (%d)\n", w.t, name, text, count)
-			}
-		}
-	}
 }

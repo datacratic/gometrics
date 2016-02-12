@@ -5,6 +5,7 @@ package metric
 import (
 	"fmt"
 	"log"
+	"strings"
 )
 
 // Labels counts and tracks generated log lines.
@@ -15,7 +16,17 @@ type Labels struct {
 
 // Record tracks generated lines of text for the specified label.
 func (labels *Labels) Record(value interface{}) {
-	text := fmt.Sprintf("%v", value)
+	text := ""
+
+	switch item := value.(type) {
+	case []string:
+		text = strings.Join(item, " ")
+	case string:
+		text = item
+	default:
+		text = fmt.Sprintf("%v", item)
+	}
+
 	if text == "" {
 		log.Printf("cannot record an empty string")
 		return

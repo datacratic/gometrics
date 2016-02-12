@@ -10,6 +10,10 @@ type Stack struct {
 	Items []Reporter
 }
 
+func NewStack(items ...Reporter) Reporter {
+	return &Stack{Items: items}
+}
+
 // NewWriter returns the stack of writers that will be used to write metrics.
 func (stack *Stack) NewWriter(s *Summary) (result Writer) {
 	w := new(stackWriter)

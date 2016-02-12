@@ -171,11 +171,6 @@ func Count(c context.Context, name string, data interface{}) {
 	store(c, name, data, CountEvent)
 }
 
-// Mark increases a counter by 1.
-func Mark(c context.Context, name string) {
-	store(c, name, 1, CountEvent)
-}
-
 // Set stores an instantaneous measurement.
 func Set(c context.Context, name string, data interface{}) {
 	store(c, name, data, SetEvent)
@@ -187,7 +182,7 @@ func Record(c context.Context, name string, data interface{}) {
 }
 
 // Log stores values directly.
-func Log(c context.Context, name string, data interface{}) {
+func Log(c context.Context, name string, data ...string) {
 	store(c, name, data, LogEvent)
 }
 
