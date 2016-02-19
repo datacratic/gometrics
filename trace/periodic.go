@@ -37,6 +37,14 @@ func (h *Periodic) Report(dt time.Duration) {
 	}
 }
 
+func (h *Periodic) Close() {
+	h.once.Do(h.initialize)
+
+	h.feed <- func() {
+		h.Handler.Close()
+	}
+}
+
 func (h *Periodic) initialize() {
 	h.feed = make(chan func(), 4096)
 	go func() {

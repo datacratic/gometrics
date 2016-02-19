@@ -14,6 +14,7 @@ import (
 type Handler interface {
 	HandleTrace([]Event)
 	Report(time.Duration)
+	Close()
 }
 
 // handlerKey is a private type to find the current handler.
@@ -43,6 +44,9 @@ func (handler *nilHandler) HandleTrace(events []Event) {
 func (handler *nilHandler) Report(dt time.Duration) {
 }
 
+func (handler *nilHandler) Close() {
+}
+
 type chainHandler struct {
 	Handler
 	f func()
@@ -57,6 +61,10 @@ func (h *chainHandler) Report(dt time.Duration) {
 	h.Handler.Report(dt)
 }
 
+func (h *chainHandler) Close() {
+	h.Handler.Close()
+}
+
 type multiHandler []Handler
 
 func (items multiHandler) HandleTrace(events []Event) {
@@ -68,5 +76,11 @@ func (items multiHandler) HandleTrace(events []Event) {
 func (items multiHandler) Report(dt time.Duration) {
 	for _, item := range items {
 		item.Report(dt)
+	}
+}
+
+func (items multiHandler) Close() {
+	for _, item := range items {
+		item.Close()
 	}
 }

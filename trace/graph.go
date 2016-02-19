@@ -121,6 +121,9 @@ func (graph *Graph) Start() error {
 func (graph *Graph) Report(dt time.Duration) {
 }
 
+func (graph *Graph) Close() {
+}
+
 // DrawSVG exports the graph in SVG format.
 func (graph *Graph) DrawSVG() (result []byte, err error) {
 	dot, err := graph.DrawDOT()

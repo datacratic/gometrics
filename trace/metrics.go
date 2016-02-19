@@ -64,3 +64,7 @@ func (h *Metrics) Report(dt time.Duration) {
 	h.Summary.Write(h.Reporter)
 	h.Summary.Reset()
 }
+
+func (h *Metrics) Close() {
+	h.Report(time.Since(h.Summary.Time))
+}
