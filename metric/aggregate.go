@@ -2,17 +2,14 @@
 
 package metric
 
-import (
-	"sync"
-	"sync/atomic"
-)
+import "sync"
 
 type Aggregate struct {
 	Counts map[string]int64
 	Commit func(counts map[string]int64) bool
 
 	once sync.Once
-	mu   sync.RWMutex
+	mu   sync.Mutex
 }
 
 func (a *Aggregate) NewWriter(s *Summary) Writer {
@@ -34,17 +31,9 @@ func (w *aggregateWriter) Write(name string, value float64) error {
 func (w *aggregateWriter) WriteScaled(name string, value float64) (err error) {
 	n := int64(value)
 
-	w.a.mu.RLock()
-	count, ok := w.a.Counts[name]
-	w.a.mu.RUnlock()
-
-	if ok {
-		atomic.AddInt64(&count, n)
-	} else {
-		w.a.mu.Lock()
-		w.a.Counts[name] = n
-		w.a.mu.Unlock()
-	}
+	w.a.mu.Lock()
+	w.a.Counts[name] = w.a.Counts[name] + n
+	w.a.mu.Unlock()
 
 	return ErrIgnored
 }
