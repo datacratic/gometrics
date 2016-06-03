@@ -11,6 +11,8 @@ import (
 	"golang.org/x/net/context"
 )
 
+const HeaderKey = "Trace-Key"
+
 type timeline struct {
 	first span
 	begin time.Time
@@ -75,7 +77,7 @@ func create(c context.Context, name, tracing string, kind int) context.Context {
 		// is there an handler?
 		handler, ok := c.Value(handlerKey(0)).(Handler)
 		if !ok {
-			handler = &nilHandler{}
+			handler = &NilHandler{}
 		}
 
 		// get the timeline storage from the pool
@@ -164,6 +166,11 @@ func Leave(c context.Context, name string) {
 
 	// we're done, unlock the timeline
 	t.mu.Unlock()
+}
+
+func Error(c context.Context, name string, err error) {
+	Log(c, name, err.Error())
+	Leave(c, name)
 }
 
 // Count increases a counter.

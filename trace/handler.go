@@ -35,16 +35,16 @@ func AddHandler(c context.Context, h Handler) context.Context {
 	return context.WithValue(c, handlerKey(0), multiHandler{item, h})
 }
 
-type nilHandler struct {
+type NilHandler struct {
 }
 
-func (handler *nilHandler) HandleTrace(events []Event) {
+func (handler *NilHandler) HandleTrace(events []Event) {
 }
 
-func (handler *nilHandler) Report(dt time.Duration) {
+func (handler *NilHandler) Report(dt time.Duration) {
 }
 
-func (handler *nilHandler) Close() {
+func (handler *NilHandler) Close() {
 }
 
 type chainHandler struct {
