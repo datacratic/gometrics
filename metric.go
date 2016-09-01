@@ -140,6 +140,6 @@ func (metric *Map) Record(value interface{}) {
 			metric.Items[name] = item
 		}
 
-		recordMembers(v.MapIndex(i), item)
+		recordMembers(v.MapIndex(i), item, "")
 	}
 }

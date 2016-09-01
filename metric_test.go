@@ -15,12 +15,13 @@ type SomeMetrics struct {
 }
 
 type MoreMetrics struct {
-	Request bool
-	Bytes   int
-	Speed   float64
-	Latency time.Duration
-	Labels  string
-	Map     map[string]SomeMetrics
+	Request   bool
+	Bytes     int
+	Speed     float64
+	Latency   time.Duration
+	Labels    string
+	Map       map[string]SomeMetrics
+	Responses SomeMetrics
 }
 
 func TestMetric(t *testing.T) {
@@ -66,6 +67,9 @@ func TestMetric(t *testing.T) {
 				Fail: true,
 			},
 		},
+		Responses: SomeMetrics{
+			Fail: true,
+		},
 	})
 
 	result := <-reports
@@ -79,17 +83,18 @@ func TestMetric(t *testing.T) {
 		t.Fatalf("expecting metrics 'data' in map '%#v'\n", result.Data)
 	}
 
-	if len(metrics.Keys) != 6 {
-		t.Fatalf("expecting 6 keys instead of %d\n", len(metrics.Keys))
+	if len(metrics.Keys) != 7 {
+		t.Fatalf("expecting 7 keys instead of %d\n", len(metrics.Keys))
 	}
 
 	values := map[string]string{
-		"Request": `{"Count":2}`,
-		"Bytes":   `{"Average":289.5,"Maximum":456,"Minimum":123}`,
-		"Speed":   `{"Average":290.1225,"Maximum":456.789,"Minimum":123.456}`,
-		"Latency": `{"Average":3e+06,"Maximum":4000000,"Minimum":2000000}`,
-		"Labels":  `{"Items":{"asdf":2}}`,
-		"Map":     `{"Items":{"a":{"Fail":{"Count":2}},"b":{"Fail":{"Count":0}},"c":{"Fail":{"Count":1}}}}`,
+		"Request":        `{"Count":2}`,
+		"Bytes":          `{"Average":289.5,"Maximum":456,"Minimum":123}`,
+		"Speed":          `{"Average":290.1225,"Maximum":456.789,"Minimum":123.456}`,
+		"Latency":        `{"Average":3e+06,"Maximum":4000000,"Minimum":2000000}`,
+		"Labels":         `{"Items":{"asdf":2}}`,
+		"Map":            `{"Items":{"a":{"Fail":{"Count":2}},"b":{"Fail":{"Count":0}},"c":{"Fail":{"Count":1}}}}`,
+		"Responses.Fail": `{"Count":1}`,
 	}
 
 	for key, value := range values {

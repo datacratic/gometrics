@@ -39,14 +39,14 @@ func (summary *Summary) Record(name string, data interface{}) {
 	}
 
 	item.Hits++
-	recordMembers(reflect.ValueOf(data).Elem(), item.Keys)
+	recordMembers(reflect.ValueOf(data).Elem(), item.Keys, "")
 }
 
-func recordMembers(value reflect.Value, keys map[string]Metric) {
+func recordMembers(value reflect.Value, keys map[string]Metric, prefix string) {
 	t := value.Type()
 
 	if t.Kind() == reflect.Ptr {
-		recordMembers(value.Elem(), keys)
+		recordMembers(value.Elem(), keys, prefix)
 		return
 	}
 
@@ -55,7 +55,7 @@ func recordMembers(value reflect.Value, keys map[string]Metric) {
 		v := value.Field(i)
 		k := v.Kind()
 
-		m, ok := keys[f.Name]
+		m, ok := keys[prefix+f.Name]
 		if !ok {
 			switch v.Interface().(type) {
 			case bool:
@@ -76,12 +76,15 @@ func recordMembers(value reflect.Value, keys map[string]Metric) {
 					m = &Map{
 						Items: make(map[string]map[string]Metric),
 					}
+				case k == reflect.Struct:
+					recordMembers(v, keys, f.Name+".")
+					continue
 				default:
 					continue
 				}
 			}
 
-			keys[f.Name] = m
+			keys[prefix+f.Name] = m
 		}
 
 		m.Record(v.Interface())
