@@ -46,7 +46,7 @@ func (h *Periodic) Close() {
 }
 
 func (h *Periodic) initialize() {
-	h.feed = make(chan func(), 4096)
+	h.feed = make(chan func(), 65536)
 	go func() {
 		for f := range h.feed {
 			f()
