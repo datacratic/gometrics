@@ -31,7 +31,6 @@ func (p *Pool) Get() interface{} {
 	case i = <-p.pool:
 	default:
 		i = p.New()
-		log.Println("new item created")
 	}
 	return i
 }
