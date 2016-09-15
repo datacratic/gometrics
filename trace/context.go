@@ -13,12 +13,41 @@ import (
 
 const HeaderKey = "Trace-Key"
 
+type Pool struct {
+	pool chan interface{}
+	New  func() interface{}
+}
+
+func NewPool(n int, f func() interface{}) *Pool {
+	return &Pool{
+		pool: make(chan interface{}, n),
+		New:  f,
+	}
+}
+
+func (p *Pool) Get() interface{} {
+	var i interface{}
+	select {
+	case i = <-p.pool:
+	default:
+		i = p.New()
+	}
+	return i
+}
+
+func (p *Pool) Put(i interface{}) {
+	select {
+	case p.pool <- i:
+	default:
+	}
+}
+
 type timeline struct {
 	first span
 	begin time.Time
 	epoch int64
 	count int64
-	total int64
+	//total int64
 	mu    sync.Mutex
 	queue []Event
 
@@ -38,15 +67,16 @@ type span struct {
 var epoch int64
 
 // keep a pool of timelines to reduce GC pressure
-var timelines = sync.Pool{
-	New: func() interface{} {
+var timelines = NewPool(
+	4096,
+	func() interface{} {
 		t := new(timeline)
-		t.total = 4096
-		t.queue = make([]Event, t.total)
+		//t.total = 4096
+		t.queue = make([]Event, 1, 4096)
 		t.first.owner = t
 		return t
 	},
-}
+)
 
 // spanKey is a private type to find the inner span
 type spanKey int
@@ -86,6 +116,7 @@ func create(c context.Context, name, tracing string, kind int) context.Context {
 		t.count = 0
 		t.Handler = handler
 		t.tracing = tracing
+		t.queue = t.queue[:1]
 
 		// reset the top span
 		s = &t.first
@@ -219,17 +250,22 @@ func store(c context.Context, name string, data interface{}, kind int) {
 
 func (t *timeline) add(from int64, kind int, what string, data interface{}) int64 {
 	t.count++
-	i, n := t.count, t.total
+	i := t.count
 
-	// double the size of the queue
-	if i == n {
-		n = n * 2
-		q := make([]Event, n)
-		copy(q, t.queue)
-		t.queue = q
-		t.total = n
-	}
+	/*
+		i, n := t.count, t.total
 
+		// double the size of the queue
+		if i == n {
+			n = n * 2
+			q := make([]Event, n)
+			copy(q, t.queue)
+			t.queue = q
+			t.total = n
+		}
+	*/
+
+	t.queue = append(t.queue, Event{})
 	item := &t.queue[i]
 	item.From = from
 	item.Kind = kind
