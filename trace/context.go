@@ -192,7 +192,7 @@ func Leave(c context.Context, name string) {
 		}
 
 		// handle events
-		h.HandleTrace(t.queue[:t.count+1])
+		go h.HandleTrace(t.queue[:t.count+1])
 	}
 
 	// we're done, unlock the timeline
